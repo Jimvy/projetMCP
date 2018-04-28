@@ -1,6 +1,6 @@
 
 //datatype Solution = array<int>
-function abs(x: int): int {
+function method abs(x: int): int {
 	if x >= 0 then x else -x
 }
 predicate okClause(tab: array<int>, np: int)
@@ -22,22 +22,31 @@ class SAT {
   //TODO //probleme : tableau de clause
   //TODO
 
-//_____________________INVARIANTS_________________________________
-// SAT 
-//TODO
-//cree le tableau de clause ???
-//initialise sol= int[maxLenght]
-//return solve(sol,0)
+	//_____________________INVARIANTS_________________________________
+	// SAT
+	//TODO
+	//cree le tableau de clause ???
+	//initialise sol= int[maxLenght]
+	//return solve(sol,0)
+	predicate okN()
+		reads this
+	{
+		n >= 0
+	}
 	predicate ok()
 		reads this, clauses, clauses[..]
 	{
 		okFNC(clauses, n) && n >= 0
 	}
+	// Garantit que les variables de 1 à ind compris ont de bonnes valeurs. Notamment, okSol(sol, 0) ne spécifie aucune variable, okSol(sol, 1) spécifie 1 variable, okSol(sol, n) spécifie toutes les variables.
 	predicate okSol(sol: array<int>, ind: int)
 		reads this, sol
-		requires 1 <= ind <= n+1
+		requires okN()
+		requires 0 <= ind <= n
 	{
-		sol.Length >= n+1 && sol[0] == 0 && forall k | 1 <= k < ind :: (sol[k] == k || sol[k] == -k) && forall k | ind <= k <= n :: sol[k] == 0
+		sol.Length >= n+1 && sol[0] == 0
+			&& forall k | 1 <= k <= ind :: (sol[k] == k || sol[k] == -k)
+			//&& forall k | ind < k <= n :: sol[k] == 0
 	}
 
 	constructor (fnc: array<array<int>>, np: int)
@@ -53,59 +62,91 @@ class SAT {
 		requires ok()
 	{
 		var sol := new int[n+1]; // L'élément 0 est ignoré.
+		var i := 0;
+		while i < sol.Length
+			invariant 0 <= i <= sol.Length
+			invariant forall k | 0 <= k < i :: sol[k] == 0
+		{
+			sol[i] := 0;
+			i := i+1;
+		}
+		assert okSol(sol, 0);
+		/*assume n > 0;
+		sol[1] := 1;
+		assert okSol(sol, 1);*/
 		b := solve(sol, 1);
 	}
 
 	method solve(sol: array<int>, ind: int) returns (b : bool)
 		requires 1 <= ind <= n+1
 		requires sol.Length >= n+1
-		//requires okSol(sol, ind)
+		requires okSol(sol, ind-1)
+		ensures okSol(sol, ind-1)
+		requires ok()
+		ensures ok()
 		modifies sol
 		decreases sol.Length - ind
   {
-    if ind < n {
+    if ind <= n {
+      assert okSol(sol, ind-1);
       sol[ind] := ind;
-      var solved := solve(sol,ind + 1);
-      if solved{
-        return true; 
-      }
-      else{ 
+      assert okSol(sol, ind);
+      var solved := solve(sol, ind + 1);
+      assert okSol(sol, ind);
+      if solved {
+        b := solved;
+      } else {
+        assert okSol(sol, ind);
         sol[ind] := -ind;
-        solved := solve(sol,ind + 1);
-        return solved;
+        assert okSol(sol, ind);
+        b := solve(sol,ind + 1);
       }
+        assert okSol(sol, ind);
+        sol[ind] := 0;
+        assert okSol(sol, ind-1);
     } else { //ind == maxLenght
+      assert okSol(sol, n);
       var check := checkSolution(sol);
+      assert okSol(sol, n);
       return check;
     }
   }
 
-	method checkSolution(sol : array<int> ) returns (b : bool)
+	method checkSolution(sol : array<int>) returns (b : bool)
+		requires ok() // n >= 0
+		requires n >= 0
+		requires okSol(sol, n)
   {
     var i := 0;
-    while i< clauses.Length
-      decreases clauses.Length-i;
+    while i < clauses.Length
+      invariant 0 <= i <= clauses.Length
+      decreases clauses.Length - i;
     {
-      var check:bool := checkClause(sol , clauses[i]);
+      var check := checkClause(sol , clauses[i]);
       if !check 
       {
         return false;
       }
       i := i+1;
     }
-    return true ;
+    return true;
   }
 
-	method checkClause(sol : array<int> , cl : array<int>) returns (b : bool)
+	method checkClause(sol : array<int> , clause : array<int>) returns (b : bool)
+		requires okN() // n >= 0 ; on n'a pas besoin de toutes les autres clauses
+		requires okClause(clause, n)
+		requires okSol(sol, n);
   {
     var i := 0;
-    while i< cl.Length
-      decreases cl.Length - i;
+    while i < clause.Length
+      invariant 0 <= i <= clause.Length
+      decreases clause.Length - i;
     {
-      var elem:int := cl[i];
+      var elem := clause[i];
+      var ind := abs(elem);
       //version courte de for s in sol { if(s == elem){ return true} }
       //if (elem == sol[i]) { //ca va etre super dur a prouver
-      if(elem == 2){ //to remove
+      if sol[ind] == elem { //to remove
         return true;
       }
       i := i+1;
