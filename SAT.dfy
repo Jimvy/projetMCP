@@ -19,8 +19,8 @@ class SAT {
 //_______________________VARIABLES________________________________________
 	var n :int ; // nombre de variables dans la FNC, et donc plus grand index de variable.
 	var clauses : array<array<int>>;
-  //TODO //probleme : tableau de clause
-  //TODO
+	//TODO //probleme : tableau de clause
+	//TODO
 
 	//_____________________INVARIANTS_________________________________
 	// SAT
@@ -91,7 +91,7 @@ class SAT {
 		ensures ok()
 		modifies sol
 		decreases sol.Length - ind
-  {
+	{
 		assert okSol(sol, ind-1);
 		/*assume ind == n - 2;
 		assume ind == 2;
@@ -113,73 +113,73 @@ class SAT {
 			assert sol[k] == 0;
 			k := k+1;
 		}*/
-    if ind <= n {
-      assert okSol(sol, ind-1);
-      sol[ind] := ind;
-      assert okSol(sol, ind);
-      var solved := solve(sol, ind + 1);
-      assert okSol(sol, ind);
-      if solved {
-        b := solved;
+		if ind <= n {
+			assert okSol(sol, ind-1);
+			sol[ind] := ind;
+			assert okSol(sol, ind);
+			var solved := solve(sol, ind + 1);
+			assert okSol(sol, ind);
+			if solved {
+				b := solved;
 			} else {
-        assert okSol(sol, ind);
-        sol[ind] := -ind;
-        assert okSol(sol, ind);
-        b := solve(sol,ind + 1);
-      }
-        assert okSol(sol, ind);
-        sol[ind] := 0;
-        assert okSol(sol, ind-1);
-    } else { //ind == maxLenght
-      assert okSol(sol, n);
-      var check := checkSolution(sol);
-      assert okSol(sol, n);
+				assert okSol(sol, ind);
+				sol[ind] := -ind;
+				assert okSol(sol, ind);
+				b := solve(sol,ind + 1);
+			}
+			assert okSol(sol, ind);
+			sol[ind] := 0;
+			assert okSol(sol, ind-1);
+		} else { //ind == maxLenght
+			assert okSol(sol, n);
+			var check := checkSolution(sol);
+			assert okSol(sol, n);
 			if check {
 				printSol(sol);
 			}
-      return check;
-    }
-  }
+			return check;
+		}
+	}
 
 	method checkSolution(sol : array<int>) returns (b : bool)
 		requires ok() // n >= 0
 		requires n >= 0
 		requires okSol(sol, n)
-  {
-    var i := 0;
-    while i < clauses.Length
-      invariant 0 <= i <= clauses.Length
-      decreases clauses.Length - i;
-    {
-      var check := checkClause(sol , clauses[i]);
-      if !check 
-      {
-        return false;
-      }
-      i := i+1;
-    }
-    return true;
-  }
+	{
+		var i := 0;
+		while i < clauses.Length
+			invariant 0 <= i <= clauses.Length
+			decreases clauses.Length - i;
+		{
+			var check := checkClause(sol , clauses[i]);
+			if !check 
+			{
+				return false;
+			}
+			i := i+1;
+		}
+		return true;
+	}
 
 	method checkClause(sol : array<int> , clause : array<int>) returns (b : bool)
 		requires okN() // n >= 0 ; on n'a pas besoin de toutes les autres clauses
 		requires okClause(clause, n)
 		requires okSol(sol, n);
-  {
-    var i := 0;
-    while i < clause.Length
-      invariant 0 <= i <= clause.Length
-      decreases clause.Length - i;
-    {
-      var elem := clause[i];
-      var ind := abs(elem);
-      if sol[ind] == elem {
-        return true;
-      }
-      i := i+1;
-    }
-    return false;
-  }
+	{
+		var i := 0;
+		while i < clause.Length
+			invariant 0 <= i <= clause.Length
+			decreases clause.Length - i;
+		{
+			var elem := clause[i];
+			var ind := abs(elem);
+			if sol[ind] == elem {
+				return true;
+			}
+			i := i+1;
+		}
+		return false;
+	}
 
 	method printSol(sol: array<int>)
 		requires okN()
@@ -217,7 +217,7 @@ method firstTest() {
 }
 method secondTest() {
 	// (A or B) and (-A) and (-B)
-  var fnc := new array<int>[3];
+	var fnc := new array<int>[3];
 	fnc[0] := new int[2];
 	fnc[1] := new int[1];
 	fnc[2] := new int[1];
