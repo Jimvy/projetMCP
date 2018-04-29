@@ -46,7 +46,8 @@ class SAT {
 	{
 		sol.Length >= n+1 && sol[0] == 0
 			&& forall k | 1 <= k <= ind :: (sol[k] == k || sol[k] == -k)
-			//&& forall k | ind < k <= n :: sol[k] == 0
+			// && forall l | ind < l <= n :: sol[l] == 0
+			// FIXME comprendre pourquoi le rajout de cette condition fait tout foirer.
 	}
 
 	constructor (fnc: array<array<int>>, np: int)
@@ -61,6 +62,10 @@ class SAT {
 	method isSatisfiable() returns (b: bool)
 		requires ok()
 	{
+		/*assume n == 4;
+		var tab := new int[5];
+		tab[0], tab[1], tab[2], tab[3], tab[4] := 0, -1, 2, 3, -4;
+		assert okSol(tab, 4);*/
 		var sol := new int[n+1]; // L'élément 0 est ignoré.
 		var i := 0;
 		while i < sol.Length
@@ -70,7 +75,7 @@ class SAT {
 			sol[i] := 0;
 			i := i+1;
 		}
-		assert okSol(sol, 0);
+		assert okSol(sol, 0); // toujours vraie
 		/*assume n > 0;
 		sol[1] := 1;
 		assert okSol(sol, 1);*/
@@ -87,6 +92,27 @@ class SAT {
 		modifies sol
 		decreases sol.Length - ind
   {
+		assert okSol(sol, ind-1);
+		/*assume ind == n - 2;
+		assume ind == 2;
+		assume n == 4;
+		assume sol.Length == 5;
+		assert okSol(sol, ind-1);
+		assert sol.Length >= n+1;
+		assert sol[0]==0;
+		assume ind <= n;
+		assert forall k | 1 <= k <= (ind-1) :: (sol[k] == k || sol[k] == -k);*/
+		//assert forall l | ind+1 <= l <= n :: sol[l] == 0;
+		/*forall (k | ind <= k <= n) {
+			assert sol[k] == 0;
+		}*/
+		/*var k := ind;
+		while k <= n
+			invariant ind <= k <= n+1
+		{
+			assert sol[k] == 0;
+			k := k+1;
+		}*/
     if ind <= n {
       assert okSol(sol, ind-1);
       sol[ind] := ind;
@@ -144,9 +170,7 @@ class SAT {
     {
       var elem := clause[i];
       var ind := abs(elem);
-      //version courte de for s in sol { if(s == elem){ return true} }
-      //if (elem == sol[i]) { //ca va etre super dur a prouver
-      if sol[ind] == elem { //to remove
+      if sol[ind] == elem {
         return true;
       }
       i := i+1;
