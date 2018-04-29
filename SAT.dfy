@@ -121,7 +121,7 @@ class SAT {
       assert okSol(sol, ind);
       if solved {
         b := solved;
-      } else {
+			} else {
         assert okSol(sol, ind);
         sol[ind] := -ind;
         assert okSol(sol, ind);
@@ -134,6 +134,9 @@ class SAT {
       assert okSol(sol, n);
       var check := checkSolution(sol);
       assert okSol(sol, n);
+			if check {
+				printSol(sol);
+			}
       return check;
     }
   }
@@ -177,6 +180,21 @@ class SAT {
     }
     return false;
   }
+
+	method printSol(sol: array<int>)
+		requires okN()
+		requires okSol(sol, n);
+	{
+		print "[";
+		var i := 1;
+		while i <= n
+			invariant 1 <= i <= n+1
+		{
+			print sol[i], " ";
+			i := i+1;
+		}
+		print "]\n";
+	}
 }
 
 method firstTest() {
@@ -194,6 +212,7 @@ method firstTest() {
 	fnc[2][1] := -3;
 	var sat1 := new SAT(fnc, 4);
 	var isSat := sat1.isSatisfiable();
+	print "1: ", isSat, "\n";
 	//assert isSat;
 }
 method secondTest() {
@@ -208,6 +227,7 @@ method secondTest() {
 	fnc[2][0] := -2;
 	var sat2 := new SAT(fnc, 2);
 	var isSat := sat2.isSatisfiable();
+	print "2: ", isSat, "\n";
 	// assert !isSat;
 }
 method thirdTest() {
@@ -220,9 +240,11 @@ method thirdTest() {
 	fnc[1][1] := -1;
 	var sat3 := new SAT(fnc, 2);
 	var isSat := sat3.isSatisfiable();
+	print "3: ", isSat, "\n";
 	// assert isSat;
 }
 method fourthTest() {
+	// A and B and C
 	var fnc := new array<int>[3];
 	var i := 0;
 	while i < 3
@@ -235,6 +257,7 @@ method fourthTest() {
 	}
 	var sat4 := new SAT(fnc, 3);
 	var isSat := sat4.isSatisfiable();
+	print "4: ", isSat, "\n";
 	//assert isSat;
 }
 method fifthTest() {
@@ -245,12 +268,14 @@ method fifthTest() {
 	fnc[1][0] := 1;
 	var sat5 := new SAT(fnc, 1);
 	var isSat := sat5.isSatisfiable();
-	// assert isSat;
+	print "5: ", isSat, "\n";
+	// assert !isSat;
 }
 method sixthTest() {
 	var fnc := new array<int>[0];
 	var sat6 := new SAT(fnc, 0);
 	var isSat := sat6.isSatisfiable();
+	print "6: ", isSat, "\n";
 	// assert isSat;
 }
 method seventhTest() {
@@ -258,10 +283,16 @@ method seventhTest() {
 	fnc[0] := new int[0];
 	var sat7 := new SAT(fnc, 0);
 	var isSat := sat7.isSatisfiable();
+	print "7: ", isSat, "\n";
 	// assert !isSat;
 }
 
 method Main() {
 	firstTest();
 	secondTest();
+	thirdTest();
+	fourthTest();
+	fifthTest();
+	sixthTest();
+	seventhTest();
 }
