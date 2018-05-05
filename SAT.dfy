@@ -272,6 +272,7 @@ method fifthTest() {
 	// assert !isSat;
 }
 method sixthTest() {
+	// ()
 	var fnc := new array<int>[0];
 	var sat6 := new SAT(fnc, 0);
 	var isSat := sat6.isSatisfiable();
@@ -279,6 +280,7 @@ method sixthTest() {
 	// assert isSat;
 }
 method seventhTest() {
+	// (())
 	var fnc := new array<int>[1];
 	fnc[0] := new int[0];
 	var sat7 := new SAT(fnc, 0);
