@@ -243,18 +243,18 @@ module SAT {
 
     // IMPLEM: Renvoie true ssi la valuation 'v' est en conflit avec l'ensemble de clause qui composent l'instance
     method is_conflicting() returns (result: bool)
-      requires ok()
-			requires instance_agree_on_size(this.problem, this.valuation[..])
-			ensures result == conflicting(this.problem, this.valuation[..])
-			// TODO ok
+        requires ok()
+        //requires instance_agree_on_size(this.problem, this.valuation[..])
+        ensures result == conflicting(this.problem, this.valuation[..])
+        // TODO ok
     {
         var k := 0;
         while k < |problem| 
-          invariant ok()
-          invariant k <= |problem|
-					// TODO ok
-          invariant forall i: nat | i < k :: !falsified(problem[i], valuation[..])
-          decreases |problem| - k
+            invariant ok()
+            invariant k <= |problem|
+            // TODO ok
+            invariant forall i: nat | i < k :: !falsified(problem[i], valuation[..])
+            decreases |problem| - k
         {
             var conflict_found := is_falsified(problem[k]);
             if conflict_found {
@@ -295,7 +295,7 @@ module SAT {
         ensures  ok()
         // La post à prouver:
         //ensures  result <==> exists v: Valuation | |v| == nb_vars :: solution(v, problem)
-       // ensures  result <==> atSolution()
+        ensures  result <==> at_solution()
         modifies valuation
     {
         forall (i | 0 <= i < nb_vars) { valuation[i] := Undefined; }
@@ -306,15 +306,16 @@ module SAT {
         requires  ok()
         requires  0 <= decision <= nb_vars
         // TODO (more requires)
-				requires instance_agree_on_size(this.problem, valuation[..])
+        requires instance_agree_on_size(this.problem, valuation[..])
         requires complete(valuation[..decision])
         decreases nb_vars - decision
         modifies  valuation
 
-        ensures   ok()
-				ensures complete(valuation[..decision])
+        ensures ok()
+        ensures complete(valuation[..decision])
         // TODO (more ensures)
-				//ensures result <==> exists solution: Valuation | prefix(decision, valuation[..], solution) :: at_solution()
+				ensures exists sol: Valuation :: (|sol| == |valuation[..]|) && complete(sol) && prefix(decision, valuation[..], sol)
+        ensures result == exists sol: Valuation | (|sol| == |valuation[..]|) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem)
     {
         if (debug) {
             print_valuation();
@@ -337,48 +338,67 @@ module SAT {
         // 1. Try true
         valuation[decision] := True;
         var finished_ := search(decision + 1);
+				assert finished_ <==> exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem);
         if finished_ {
+					  //assert (exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && /*valuation[decision]==True &&*/ complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
             return true;
         }
+				assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==True && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==True && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
 
         // 2. Try false
         valuation[decision] := False;
         finished_ := search(decision + 1);
         if finished_ {
+					//assert (exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
             return true;
         }
+				assert exists sol: Valuation :: (|sol|==|valuation[..]|) && sol[decision]==False && complete(sol) && prefix(decision, valuation[..], sol) ;
+				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==False && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && (sol[decision]==True || sol[decision]==False)  && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
 
         // 3. Backtrack
+				//assert ! (exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert ! (exists sol: Valuation | sol[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | sol[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !((exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) || (exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem))) <==> !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !((exists sol: Valuation | (valuation[decision]==True || valuation[decision]==False || valuation[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
+				//assert !(exists sol: Valuation | valuation[decision] == Undefined && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+				//assert !((exists sol: Valuation | (sol[decision]==True || sol[decision]==False || sol[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
+
         valuation[decision] := Undefined;
+
+				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
         return false;
     }
 
     // SPEC: Renvoie true ssi on a trouvé une solution
     predicate at_solution() 
         requires instance_agree_on_size(problem, valuation[..])
+        requires valuation.Length == nb_vars
         reads this
         reads this.valuation
-				//ensures solution(valuation[..], problem)
+        ensures at_solution() <==> solution(valuation[..], problem)
     {
         solution(valuation[..], problem)
     }
 
     // IMPLEM: Renvoie true ssi on a trouvé une solution
     method solution_found() returns (result: bool)
-      requires ok()
-			// TODO ok
-      ensures result <==> at_solution()
+        requires ok()
+        // TODO ok
+        ensures result <==> solution(valuation[..], problem)
+        ensures ok()
     {
         var complete_ := is_complete();
         if !complete_ {
             return false;
         }
-
         var conflict_ := is_conflicting();
         if conflict_ {
             return false;
         }
-
         return true;
     }
 
