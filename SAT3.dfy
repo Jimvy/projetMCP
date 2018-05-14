@@ -302,14 +302,14 @@ module SAT {
         requires ok()
         ensures  ok()
         // La post à prouver:
-        ensures  result <==> exists v: Valuation | |v| == nb_vars :: solution(v, problem)
-        //ensures  result <==> at_solution()
+        ensures result <==> exists v: Valuation | |v| == nb_vars :: solution(v, problem)
+        ensures  result <==> at_solution()
         modifies valuation
     {
         forall (i | 0 <= i < nb_vars) { valuation[i] := Undefined; }
         result := search(0);
     }
-
+    
     method search(decision: nat) returns (result: bool) 
         requires  ok()
         requires  0 <= decision <= nb_vars
@@ -321,10 +321,10 @@ module SAT {
 
         ensures ok()
         ensures complete(valuation[..decision])
-        // TODO (more ensures)
-				ensures exists sol: Valuation :: (|sol| == |old(valuation[..])|) && complete(sol) && prefixComplete(decision, old(valuation[..]), sol)
+        ensures exists sol: Valuation :: (|sol| == |old(valuation[..])|) && complete(sol) && prefixComplete(decision, old(valuation[..]), sol)
         ensures result <==> exists sol: Valuation | (|sol| == |old(valuation[..])|) && complete(sol) && prefixComplete(decision, old(valuation[..]), sol) :: solution(sol, problem)
-				ensures prefix(decision, valuation[..], old(valuation[..]))
+        ensures prefix(decision, valuation[..], old(valuation[..]))
+        ensures result <==> at_solution()
     {
         if (debug) {
             print_valuation();
@@ -338,7 +338,7 @@ module SAT {
         }
 
         // (BONUS, plus difficile à prouver is_conflicting())
-        // Shortcut pour quand même détecter qu'il y a un conflit avant d'avoir assigné toutes les variables
+        // Shortcut pour quand même dÃ©tecter qu'il y a un conflit avant d'avoir assigné toutes les variables
         //var conflict_ := is_conflicting();
         //if conflict_ {
         //    return false;
@@ -349,40 +349,40 @@ module SAT {
         var finished_ := search(decision + 1);
 				assert finished_ <==> exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem);
         if finished_ {
-					  //assert (exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && /*valuation[decision]==True &&*/ complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+          //assert finished_;
+            //assert (exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
             return true;
         }
-				assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==True && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==True && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==True && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
 
         // 2. Try false
         valuation[decision] := False;
         finished_ := search(decision + 1);
         if finished_ {
-					//assert (exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+            //assert (exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+            //assert (exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefixComplete(decision+1, valuation[..], sol) :: solution(sol, problem));
             return true;
         }
-				//assert exists sol: Valuation :: (|sol|==|valuation[..]|) && sol[decision]==False && complete(sol) && prefix(decision, valuation[..], sol) ;
-				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==False && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && (sol[decision]==True || sol[decision]==False)  && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefixComplete(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && sol[decision]==False && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && (sol[decision]==False || sol[decision] == True) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && (sol[decision]==False || sol[decision] == True || sol[decision] == Undefined) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        //assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, old(valuation[..]), sol) :: solution(sol, problem));
 
         // 3. Backtrack
-				//assert ! (exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert ! (exists sol: Valuation | sol[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | sol[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !((exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) || (exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem))) <==> !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !((exists sol: Valuation | (valuation[decision]==True || valuation[decision]==False || valuation[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
-				//assert !(exists sol: Valuation | valuation[decision] == Undefined && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
-				//assert !((exists sol: Valuation | (sol[decision]==True || sol[decision]==False || sol[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
+        //assert ! (exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert ! (exists sol: Valuation | sol[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) && !(exists sol: Valuation | sol[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert !((exists sol: Valuation | valuation[decision]==True && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)) || (exists sol: Valuation | valuation[decision]==False && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem))) <==> !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert !((exists sol: Valuation | (valuation[decision]==True || valuation[decision]==False || valuation[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
+        //assert !(exists sol: Valuation | valuation[decision] == Undefined && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem));
+        //assert !((exists sol: Valuation | (sol[decision]==True || sol[decision]==False || sol[decision]==Undefined ) && (|sol|==|valuation[..]|) && complete(sol) && prefix(decision+1, valuation[..], sol) :: solution(sol, problem)));
 
         valuation[decision] := Undefined;
-
-				//assert !(exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefix(decision, valuation[..], sol) :: solution(sol, problem));
+        //assert result <==> exists sol: Valuation | (|sol|==|valuation[..]|) && complete(sol) && prefixComplete(decision, valuation[..], sol) :: solution(sol, problem);
         return false;
     }
-
-    // SPEC: Renvoie true ssi on a trouvé une solution
     predicate at_solution() 
         requires instance_agree_on_size(problem, valuation[..])
         requires valuation.Length == nb_vars
@@ -456,8 +456,8 @@ method print_problem (p: Instance) {
     
 
 method solve(p: Instance) returns (found: bool)
-  requires all_literals_in_range(4, p);
-	ensures found <==> exists v: Valuation | |v| == 4 :: solution(v, p)
+    requires all_literals_in_range(4, p);
+    ensures found <==> exists v: Valuation | |v| == 4 :: solution(v, p)
 {
     print "\n";
     print_problem(p);
@@ -470,12 +470,12 @@ method solve(p: Instance) returns (found: bool)
         print "UNSAT\n";
     }
 }
-method sixthTest() returns (l: bool)
+/*method sixthTest() returns (l: bool)
 	ensures l
 {
 	var sixthTest := new SatSolver(1, [], true);
 	l := sixthTest.solve();
-}
+}*/
 
 method Main() {
     var a, a_ := lit(0, Positive), lit(0, Negative);
@@ -484,9 +484,9 @@ method Main() {
     var d, d_ := lit(3, Positive), lit(3, Negative);
 
     var l := solve([[a, b, c_], [c, d_], [a_, b], [a_, c_], [a_], [b_]]);
-		//assert l;
+    //assert l;
     l := solve([[a], [a_]]);
-		//assert !l;
+    //assert !l;
     l := solve([
       [a,b,c,d],
       [a,b,c,d_],
@@ -505,6 +505,6 @@ method Main() {
       [a_,b_,c_,d],
       [a_,b_,c_,d_]
 			]);
-			//assert l;
+    //assert l;
 }
 }
