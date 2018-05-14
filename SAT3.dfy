@@ -455,19 +455,26 @@ method print_problem (p: Instance) {
 }
     
 
-method solve(p: Instance) 
-    requires all_literals_in_range(4, p);
+method solve(p: Instance) returns (found: bool)
+  requires all_literals_in_range(4, p);
+	ensures found <==> exists v: Valuation | |v| == 4 :: solution(v, p)
 {
     print "\n";
     print_problem(p);
     var solver := new SatSolver(4, p, false);
-    var found := solver.solve();
+    found := solver.solve();
     if (found) {
         print "SAT: ";
         solver.print_valuation();
     } else {
         print "UNSAT\n";
     }
+}
+method sixthTest() returns (l: bool)
+	ensures l
+{
+	var sixthTest := new SatSolver(1, [], true);
+	l := sixthTest.solve();
 }
 
 method Main() {
@@ -476,25 +483,28 @@ method Main() {
     var c, c_ := lit(2, Positive), lit(2, Negative);
     var d, d_ := lit(3, Positive), lit(3, Negative);
 
-    solve([[a, b, c_], [c, d_], [a_, b], [a_, c_], [a_], [b_]]);
-    solve([[a], [a_]]);
-    solve([
-            [a,b,c,d],
-            [a,b,c,d_],
-            [a,b,c_,d],
-            [a,b,c_,d_],
-            //[a,b_,c,d], <- the solution
-            [a,b_,c,d_],
-            [a,b_,c_,d],
-            [a,b_,c_,d_],
-            [a_,b,c,d],
-            [a_,b,c,d_],
-            [a_,b,c_,d],
-            [a_,b,c_,d_],
-            [a_,b_,c,d],
-            [a_,b_,c,d_],
-            [a_,b_,c_,d],
-            [a_,b_,c_,d_]
-    ]);
+    var l := solve([[a, b, c_], [c, d_], [a_, b], [a_, c_], [a_], [b_]]);
+		//assert l;
+    l := solve([[a], [a_]]);
+		//assert !l;
+    l := solve([
+      [a,b,c,d],
+      [a,b,c,d_],
+      [a,b,c_,d],
+      [a,b,c_,d_],
+      //[a,b_,c,d], <- the solution
+      [a,b_,c,d_],
+      [a,b_,c_,d],
+      [a,b_,c_,d_],
+      [a_,b,c,d],
+      [a_,b,c,d_],
+      [a_,b,c_,d],
+      [a_,b,c_,d_],
+      [a_,b_,c,d],
+      [a_,b_,c,d_],
+      [a_,b_,c_,d],
+      [a_,b_,c_,d_]
+			]);
+			//assert l;
 }
 }
